@@ -1,0 +1,36 @@
+target/
+logs/
+*.log
+.DS_Store
+CATALINA_HOME_IS_UNDEFINED
+LOG_FILE_IS_UNDEFINED
+ 
+### Eclipse ###
+.classpath
+.project
+.settings/
+bin/
+out
+ 
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+ 
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+ 
+### NetBeans ###
+/nbproject/private/
+/build/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
