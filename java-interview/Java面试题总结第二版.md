@@ -112,6 +112,7 @@
 
 ### 码泰科技面试题
 - LockSupport
+  - https://baijiahao.baidu.com/s?id=1666548481761194849&wfr=spider&for=pc
 - Maven 解决 jar 包冲突
 	- maven默认根据最短路径、最先声明加载 jar 包
 	- 我们可以借助 Maven Helper 插件中的 Dependency Analyzer 分析冲突的 jar 包，然后在对应标红版本的 jar 包上面点击 execlude，就可以将该 jar 包排除出去
