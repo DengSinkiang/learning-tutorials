@@ -223,6 +223,19 @@
 - Java的synchronized的静态同步方法和非静态同步方法的区别
 	- https://blog.csdn.net/sinat_34341162/article/details/83187172
 	
+
+### 滴滴面试
+
+- Spring 单例 Bean 是线程安全的吗？
+- 聊聊对微服务的看法
+- mysql索引为什么采用B+树
+- 页分裂
+- redisson 分布式锁续约，stop the world之后怎么保证继续监听续约
+- rabbitmq的选型，为啥选它，RabbitMQ延迟最低，低在哪里
+- 消息大量积压，怎么解决
+- hashmap的容量为什么是2的幂次方，为啥不直接转红黑树，要先转链表
+- 
+
 ---
 ## JVM
 - Java 垃圾回收
