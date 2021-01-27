@@ -41,9 +41,9 @@
 	- JDK5 往后，任务分两类：一类是实现了 Runnable 接口的类，一类是实现了 Callable 接口的类。两者都可以被 ExecutorService 执行，它们的区别是：execute(Runnable x) 没有返回值。可以执行任务，但无法判断任务是否成功完成。——实现Runnable接口，submit(Runnable x) 返回一个future。可以用这个future来判断任务是否成功完成。——实现Callable接口
 - HashMap为啥链表长度大于8
 - mysql 主从复制原理
-	- 数据库有个bin-log二进制文件，记录了所有sql语句
-	- 我们的目标就是把主数据库的bin-log文件的sql语句复制过来
-	- 让其在从数据库的relay-log重做日志文件中再执行一次这些sql语句即可
+	- 数据库有个bin log二进制文件，记录了所有sql语句
+	- 我们的目标就是把主数据库的bin log文件的sql语句复制过来
+	- 让其在从数据库的redo log重做日志文件中再执行一次这些sql语句即可
 - int（4）和 int（11）varchar和char区别
 	- int(M) M指示最大显示宽度 0003代表int（4）
 	- vachar存储可变长的字符串，比char更节省空间
@@ -55,7 +55,7 @@
 
   - https://www.cnblogs.com/biehongli/p/12370693.html
 
-- expalin 字段意义
+- explain 字段意义
 
   - https://segmentfault.com/a/1190000008131735
 
