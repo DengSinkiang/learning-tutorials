@@ -582,6 +582,65 @@
 - 所以其实一条redo log看起来大致的结构如下所示：日志类型（就是类似MLOG_1BYTE之类的），表空间ID，数据页号，数据页中的偏移量，具体修改的数据
 - 如果是MLOG_WRITE_STRING类型的日志，因为不知道具体修改了多少字节的数据，所以其实会多一个修改数据长度，就告诉你他这次修改了多少字节的数据，如下所示他的格式：日志类型（就是类似MLOG_1BYTE之类的），表空间ID，数据页号，数据页中的偏移量，修改数据长度，具体修改的数据
 
+#### redo log是直接一条一条写入文件的吗？非也，揭秘redo log block
+
+- 平时我们执行CRUD的时候，从磁盘加载数据页到buffer pool的缓存页里去，然后对缓存页执行增删改，同时还会写redo log到日志文件里去，后续不定时把缓存页刷回磁盘文件里去，大概就是这个原理
+- 每一条redo log记录：
+  - 表空间号+数据页号+数据页内偏移量+修改了几个字节的数据+实际修改数据
+- redo log就是按照上述格式，一条一条的直接就写入到磁盘上的日志文件里去了吗
+  - 显然不是的。
+  - 其实MySQL内有另外一个数据结构，叫做redo log block，大概你可以理解为，平时我们的数据不是存放在数据页了的么，用一页一页的数据页来存放数据。
+  - 那么对于redo log也不是单行单行的写入日志文件的，他是用一个redo log block来存放多个单行日志的。
+  - 一个redo log block是512字节，这个redo log block的512字节分为3个部分，一个是12字节的header块头，一个是496字节的body块体，一个是4字节的trailer块尾
+    - 12字节的header头又分为了4个部分
+      - 包括4个字节的block no，就是块唯一编号
+      -  2个字节的data length，就是block里写入了多少字节数据
+      - 2个字节的first record group。这个是说每个事务都会有多个redo log，是一个redo log group，即一组redo log。那么在这个block里的第一组redo log的偏移量，就是这2个字节存储的
+      - 4个字节的checkpoint on
+  - 其实对于我们的redo log而言，他确实是不停的追加写入到redo log磁盘文件里去的，但是其实每一个redo log都是写入到文件里的一个redo log block里去的，一个block最多放496自己的redo log日志
+- 到底一个一个的redo log block在日志文件里是怎么存在的？那么一条一条的redo log又是如何写入日志文件里的redo log block里去的
+  - 假设你有一个redo log日志文件，平时我们往里面写数据，你大致可以认为是从第一行开始，从左往右写，可能会有很多行
+  - 假设你要写第一个redo log了，是不是应该起码是先在内存里把这个redo log给弄到一个redo log block数据结构里去
+  - 然后似乎你应该是等内存里的一个redo log block的512字节都满了，再一次性把这个redo log block写入磁盘文件
+  - 然后其实按照我们所说的，一个redo log block就是512字节，那么是不是真正写入的时候，把这个redo log block的512字节的数据，就写入到redo log文件里去就可以了？那么redo log文件里就多了一个block
+  - 写文件的时候，可以按照字节，一个字节一个字节的写入的，文件里存放的东西就是很多很多字节，依次排开，然后其中可能512个字节组合起来，就固定代表了一个redo log block
+  - 其实就是任何一个中间件系统，数据库系统，底层依赖磁盘文件存储数据的一个共同的原理
+  - 那么如果依次在磁盘文件里的末尾追加不停的写字节数据，就是磁盘顺序写；但是假设现在磁盘文件里已经有很多很多的redo log block了，此时要在磁盘里某个随机位置找到一个redo log block去修改他里面几个字节的数据，这就是磁盘随机写
+
+#### 直接强行把redo log写入磁盘？非也，揭秘redo log buffer
+
+- redo log到底是如何通过内存缓冲之后，再进入磁盘文件里去的，这就涉及到了一个新的组件，redo log buffer，他就是MySQL专门设计了用来缓冲redo log写入的
+- redo log buffer其实就是MySQL在启动的时候，就跟操作系统申请的一块连续内存空间，大概可以认为相当于是bufferpool吧。那个buffer pool是申请之后划分了N多个空的缓存页和一些链表结构，让你把磁盘上的数据页加载到内存里来的。redo log buffer也是类似的，他是申请出来的一片连续内存，然后里面划分出了N多个空的redo log block
+- 通过设置mysql的innodb_log_buffer_size可以指定这个redo log buffer的大小，默认的值就是16MB，其实已经够大了，毕竟一个redo log block才512自己而已，每一条redo log其实也就几个字节到几十个字节
+- 当你要写一条redo log的时候，就会先从第一个redo log block开始写入。写满了一个redo log block，就会继续写下一个redo log block，以此类推，直到所有的redo log block都写满。要是redo log buffer里所有的redo log block都写满了。此时必然会强制把redo log block刷入到磁盘中
+- 其实在我们平时执行一个事务的过程中，每个事务会有多个增删改操作，那么就会有多个redo log，这多个redo log就是一组redo log，其实每次一组redo log都是先在别的地方暂存，然后都执行完了，再把一组redo
+  log给写入到redo log buffer的block里去的
+- 如果一组redo log实在是太多了，那么就可能会存放在两个redo log block中
+- 但是反之，如果说一个redo log group比较小，那么也可能多个redo log group是在一个redo log block里的
+
+#### redo log buffer中的缓冲日志，到底什么时候可以写入磁盘
+
+- redo log buffer的缓冲机制
+  - redo log在写的时候，都是一个事务里的一组redo log，先暂存在一个地方，完事儿了以后把一组redo log写入redo log buffer
+  - 写入redo log buffer的时候，是写入里面提前划分好的一个一个的redo log block的，选择有空闲空间的redo logblock去写入，然后redo log block写满之后，其实会在某个时机刷入到磁盘里去
+- redo log block是哪些时候会刷入到磁盘文件里去
+  - 如果写入redo log buffer的日志已经占据了redo log buffer总容量的一半了，也就是超过了8MB的redo log在缓冲里了，此时就会把他们刷入到磁盘文件里去
+  - 一个事务提交的时候，必须把他的那些redo log所在的redo log block都刷入到磁盘文件里去，只有这样，当事务提交之后，他修改的数据绝对不会丢失，因为redo log里有重做日志，随时可以恢复事务做的修改（这个redo log哪怕事务提交的时候写入磁盘文件，也是先进入os cache的，进入os的文件缓冲区里，所以是否提交事务就强行把redo log刷入物理磁盘文件中，这个需要设置对应的参数）
+  - 后台线程定时刷新，有一个后台线程每隔1秒就会把redo log buffer里的redo log block刷到磁盘文件里去
+  - MySQL关闭的时候，redo log block都会刷入到磁盘里去
+  - 忽略上面的第四条不说，因为关闭MySQL的时候必然会刷redo log到磁盘，其他三条其实我们都看到了，也就是说，如果你瞬间执行大量的高并发的SQL语句，1秒内就产生了超过8MB的redo log，此时占据了redo log buffer一半的空间了，必然会直接把你的redo log刷入磁盘里去
+  - 上面这种redo log刷盘的情况，在MySQL承载高并发请求的时候比较常见，比如每秒执行上万个增删改SQL语句，每个SQL产生的redo log假设有几百个字节，此时却是会在瞬间生成超过8MB的redo log日志，必然会触发立马刷新redo log到磁盘
+  - 其次，第二种情况，其实就是平时执行一个事务，这个事务一般都是在几十毫秒到几百毫秒执行完毕的，说实在的，一般正常性能情况下，MySQL单事务性能一般不会超过1秒，否则数据库操作就太慢了。那么如果在几十毫秒，或者几百毫秒的时候，执行完毕了一个事务，此时必然会立马把这个事务的redo log都刷入磁盘
+  - 但是不管怎么说，主要是保证一个事务执行的时候，redo log都进入redo log buffer，提交事务的时候，事务对应的redo log必须是刷入磁盘文件，接着才算是事务提交成功，否则事务提交就是失败，保证这一点，就能确保事务提交之后，数据不会丢，有redo log在磁盘里就行了
+  - 当然，绝对保证数据不丢，还得配置一个参数，提交事务把redo log刷入磁盘文件的os cache之后，还得强行从os cache刷入物理磁盘
+- 平时不停的执行增删改，那么MySQL会不停的产生大量的redo log写入日志文件，那么日志文件就用一个写入全部的redo log？对磁盘占用空间越来越大怎么办
+  - 实际上默认情况下，redo log都会写入一个目录中的文件里，这个目录可以通过show variables like 'datadir'来查看，可以通过innodb_log_group_home_dir参数来设置这个目录的
+  - 然后redo log是有多个的，写满了一个就会写下一个redo log，而且可以限制redo log文件的数量，通过
+    innodb_log_file_size可以指定每个redo log文件的大小，默认是48MB，通过innodb_log_files_in_group可以指定日志文件的数量，默认就2个
+  - 所以默认情况下，目录里就两个日志文件，分别为ib_logfile0和ib_logfile1，每个48MB，最多就这2个日志文件，就是先写第一个，写满了写第二个。那么如果第二个也写满了呢？别担心，继续写第一个，覆盖第一个日志文件里原来的redo log就可以了
+  - 所以最多这个redo log，mysql就给你保留了最近的96MB的redo log而已，不过这其实已经很多了，毕竟redo log真的很小，一条通常就几个字节到几十个字节不等，96MB足够你存储上百万条redo log了
+  - 如果你还想保留更多的redo log，其实调节上述两个参数就可以了，比如每个redo log文件是96MB，最多保留100个redo log文件
+
 #### 思考题
 
 - 不同的存储引擎是用来干什么的
