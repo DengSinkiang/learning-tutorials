@@ -450,6 +450,10 @@
 	- InnoDB：索引的本身就是数据的一部分，因此，每一个叶子节点都储存了完整的数据
 
 ## 框架相关
+
+- Spring 中的bean是线程安全的吗
+  - https://www.cnblogs.com/myseries/p/11729800.html
+
 - Springboot的自动配置原理
       - Spring Boot启动的时候会通过@EnableAutoConfiguration注解找到META-INF/spring.factories配置文件中的所有自动配置类，并对其进行加载，而这些自动配置类都是以AutoConfiguration结尾来命名的，它实际上就是一个JavaConfig形式的Spring容器配置类，它能通过以Properties结尾命名的类中取得在全局配置文件中配置的属性如：server.port，而XxxxProperties类是通过@ConfigurationProperties注解与全局配置文件中对应的属性进行绑定的
 - Spring Bean 的作用域
@@ -759,4 +763,45 @@
 - AOP 和 IOC 的原理
 - 基于 JDK 动态代理和 CGLIB 动态代理的区别
 - spring boot 的原理
+
+## 笔试题
+
+- 给定一个只包括 '('，')'，'{'，'}'，'['，']' 的字符串，判断字符串是否有效
+
+  ```
+  class Solution {
+      public boolean isValid(String s) {
+          Stack<Character> stack= new Stack<Character>();
+          for(char c:s.toCharArray()){
+              if(c=='(')
+                  stack.push(')');
+             else if(c=='[')
+                  stack.push(']');
+             else if(c=='{')
+                  stack.push('}');
+              else if(stack.isEmpty()||stack.pop()!=c)
+                  return false;    
+          }       
+          return stack.isEmpty();    
+      }
+  }
+  ```
+
+- 找到一个无序数组中找两个特定数，使其相加等于特定数字，请写代码java将它找出来，并指出时间复杂度。例如 【10,25,19,89,75,56,34,54,16，9，-5】找到相加等于28的【19,9 】
+
+  ```
+  Map<Integer, Integer> map = new HashMap<>();
+  for (int i = 0; i < n; i++) {
+   map.put(arr[i], 1);
+  }
+  for (int i = 0; i < n; i++) {
+       int other = num - arr[i];
+     Integer value = map.get(other);
+       if (value != null) {
+         System.out.println("i:" + arr[i] + "j:" + other); 
+       }
+  }
+  ```
+
+  
 
