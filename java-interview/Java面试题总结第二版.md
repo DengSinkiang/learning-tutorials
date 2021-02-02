@@ -150,11 +150,6 @@
 - 我们可以借助 Maven Helper 插件中的 Dependency Analyzer 分析冲突的 jar 包，然后在对应标红版本的 jar 包上面点击 execlude，就可以将该 jar 包排除出去
 - 或者手动在 pom.xml 中使用 <exclusion> 标签去排除冲突的 jar 包
 
-### InnoDB 索引的底层结构
-
-- B+Tree: 数据存储在叶子节点，其他节点只存储索引信息
-- B-Tree: 数据存储在各个节点上
-
 ### hashMap 的结构图 红黑树理解
 
 ### ArrayList 扩容
@@ -206,6 +201,8 @@
   - 使用 B+ 树
     - 解决回旋查找的问题，范围查找效率高：**B-树只能依靠**繁琐的**中序遍历**，而**B+树只须要在链表上遍历**便可
     - 非叶子节点置只存储key，叶子节点存储key和value，value 指数据的地址
+    - B+Tree: 数据存储在叶子节点，其他节点只存储索引信息----InnoDB
+    - B-Tree: 数据存储在各个节点上----InnoDB
   
 - Spring Cloud 里的 RPC 怎么实现的
 
@@ -228,82 +225,73 @@
 
 - 哪些地方应用 Redis 缓存，数据缓存一致性，假如删除缓存时发现缓存已经不见了，大量请求积压到 Mysql 怎么解决
 
-### 金锐软件面试题
-- controller 和 service 和 dao 层是单例的吗？
-	- 是的 可以通过在配置文件的 bean 中添加 scope="prototype" 变成多例
-- 线程安全
-- != null 和 is not null 区别
-	- != null 查询结果为空，返回 0 行，没有语法错误
-- ArrayList 和 LinkedList 的区别
-- 线程安全集合有哪些
-	- CopyOnWriteArrayList 与 SynchronizedList
-	- HashTable、Vector、CurrentHashMap
-- 怎么优化 SQL 语句
-- 比如将 123 转换为 char 类型：SELECT CAST(123 AS CHAR) SELECT CONCAT(123,'')
-- 将字符串转为数字：SELECT CONVERT('67',SIGNED)
-- 自连接和子查询谁的效率高：自连接
-- union all 和 union 的区别
-	- union all 直接将两个查询结果集合并
-	- union 把两个结果集合并后进行去重/distinct
-- 大量数据插入 mysql 怎么保证数据不会重复
-- redis是不是单线程的
-	- 是的 因为Redis是基于内存的操作，CPU不是Redis的瓶颈，Redis的瓶颈最有可能是机器内存的大小或者网络带宽
-- redis 主从 + 哨兵模式
-- Spring 事务的传播机制
-- ThreadLocal 与 Synchronized区别
-	- 相同：ThreadLocal和线程同步机制都是为了解决多线程中相同变量的访问冲突问题
-	- Synchronized用于线程间的数据共享，而ThreadLocal则用于线程间的数据隔离
-	- 不同：Synchronized同步机制采用了“以时间换空间”的方式，仅提供一份变量，让不同的线程排队访问；而ThreadLocal采用了“以空间换时间”的方式，每一个线程都提供了一份变量，因此可以同时访问而互不影响
-	- https://www.cnblogs.com/xhyouyou/p/6932286.html
-- Mybatis # 和 $ 的区别
-
-	- #{}是预编译处理，${}是字符串替换
-- 线程池不允许使用 Executors 去创建，而是通过 ThreadPoolExecutor 的方式，这样
+### controller 和 service 和 dao 层是单例的吗？
+- 是的 可以通过在配置文件的 bean 中添加 scope="prototype" 变成多例
+### 线程安全
+### != null 和 is not null 区别
+- != null 查询结果为空，返回 0 行，没有语法错误
+### ArrayList 和 LinkedList 的区别
+### 线程安全集合有哪些
+- CopyOnWriteArrayList 与 SynchronizedList
+- HashTable、Vector、CurrentHashMap
+### 怎么优化 SQL 语句
+### 比如将 123 转换为 char 类型：SELECT CAST(123 AS CHAR) SELECT CONCAT(123,'')
+### 将字符串转为数字：SELECT CONVERT('67',SIGNED)
+### 自连接和子查询谁的效率高：自连接
+### union all 和 union 的区别
+- union all 直接将两个查询结果集合并
+- union 把两个结果集合并后进行去重/distinct
+### 大量数据插入 mysql 怎么保证数据不会重复
+### redis是不是单线程的
+- 是的 因为Redis是基于内存的操作，CPU不是Redis的瓶颈，Redis的瓶颈最有可能是机器内存的大小或者网络带宽
+### redis 主从 + 哨兵模式
+### Spring 事务的传播机制
+### ThreadLocal 与 Synchronized区别
+- 相同：ThreadLocal和线程同步机制都是为了解决多线程中相同变量的访问冲突问题
+- Synchronized用于线程间的数据共享，而ThreadLocal则用于线程间的数据隔离
+- 不同：Synchronized同步机制采用了“以时间换空间”的方式，仅提供一份变量，让不同的线程排队访问；而ThreadLocal采用了“以空间换时间”的方式，每一个线程都提供了一份变量，因此可以同时访问而互不影响
+- https://www.cnblogs.com/xhyouyou/p/6932286.html
+### Mybatis # 和 $ 的区别
+- #{}是预编译处理，${}是字符串替换
+### 线程池不允许使用 Executors 去创建，而是通过 ThreadPoolExecutor 的方式，这样
 的处理方式让写的同学更加明确线程池的运行规则，规避资源耗尽的风险。 说明:Executors 返回的线程池对象的弊端如下:
-	- 1)FixedThreadPool 和 SingleThreadPool:
+- 1)FixedThreadPool 和 SingleThreadPool:
 允许的请求队列长度为 Integer.MAX_VALUE，可能会堆积大量的请求，从而导致 OOM 
-	- 2)CachedThreadPool 和 ScheduledThreadPool:
+- 2)CachedThreadPool 和 ScheduledThreadPool:
 允许的创建线程数量为 Integer.MAX_VALUE，可能会创建大量的线程，从而导致 OOM
+### tcp 三次握手、四次挥手、滑动窗口
+### mysql 索引类型
+### 怎么优化sql
+### synchronized 和 Lock 的区别
+### 聚簇索引和非聚簇索引的区别
+### Java 垃圾回收算法
+### MySQL 的隔离级别
+### 一致性 hash 算法
+### synchronized的锁升级
+### hashmap 扩容
+### MySQL 乐观锁和悲观锁的理解与使用
+- https://www.jb51.net/article/180876.htm
+### java 多线程中 sleep 和 wait 的4个区别
+- sleep是线程中的方法，但是wait是Object中的方法
+- sleep方法不会释放锁，但是wait会释放，而且会加入到等待队列中
+- sleep方法不依赖于synchronized，但是wait需要依赖synchronized关键字
+- sleep不需要被唤醒（休眠之后退出阻塞），但是wait需要（不指定时间需要被别人中断）
+### 死锁、活锁与饥饿的区别
+- https://segmentfault.com/a/1190000019168229?utm_source=tag-newest
+### Java 内存模型
+- 堆、方法区由所有线程共享的的数据区
+- 虚拟机栈、本地方法栈和程序计数器是线程隔离的数据区
+### Java的synchronized的静态同步方法和非静态同步方法的区别
+- https://blog.csdn.net/sinat_34341162/article/details/83187172
 
-### 字节跳动
-- tcp 三次握手、四次挥手、滑动窗口
-- mysql 索引类型
-- 怎么优化sql
-- synchronized 和 Lock 的区别
-- 聚簇索引和非聚簇索引的区别
-- Java 垃圾回收算法
-- MySQL 的隔离级别
-- 一致性 hash 算法
-- synchronized的锁升级
-- hashmap 扩容
-- MySQL 乐观锁和悲观锁的理解与使用
-	- https://www.jb51.net/article/180876.htm
-- java 多线程中 sleep 和 wait 的4个区别
-	- sleep是线程中的方法，但是wait是Object中的方法
-	- sleep方法不会释放锁，但是wait会释放，而且会加入到等待队列中
-	- sleep方法不依赖于synchronized，但是wait需要依赖synchronized关键字
-	- sleep不需要被唤醒（休眠之后退出阻塞），但是wait需要（不指定时间需要被别人中断）
-- 死锁、活锁与饥饿的区别
-	- https://segmentfault.com/a/1190000019168229?utm_source=tag-newest
-- Java 内存模型
-	- 堆、方法区由所有线程共享的的数据区
-	- 虚拟机栈、本地方法栈和程序计数器是线程隔离的数据区
-- Java的synchronized的静态同步方法和非静态同步方法的区别
-	- https://blog.csdn.net/sinat_34341162/article/details/83187172
-	
-
-### 滴滴面试
-
-- Spring 单例 Bean 是线程安全的吗？
-- 聊聊对微服务的看法
-- mysql索引为什么采用B+树
-- 页分裂
-- redisson 分布式锁续约，stop the world之后怎么保证继续监听续约
-- rabbitmq的选型，为啥选它，RabbitMQ延迟最低，低在哪里
-- 消息大量积压，怎么解决
-- hashmap的容量为什么是2的幂次方，为啥不直接转红黑树，要先转链表
-- 
-
+### Spring 单例 Bean 是线程安全的吗？
+### 聊聊对微服务的看法
+### mysql索引为什么采用B+树
+### 页分裂
+### redisson 分布式锁续约，stop the world之后怎么保证继续监听续约
+### rabbitmq的选型，为啥选它，RabbitMQ延迟最低，低在哪里
+### 消息大量积压，怎么解决
+### hashmap的容量为什么是2的幂次方，为啥不直接转红黑树，要先转链表
 ---
 ## JVM
 - Java 垃圾回收
@@ -649,11 +637,12 @@
   - 锁不能自己失效
 
 - Redisson 分布式锁
-
-  - 原理：https://www.cnblogs.com/kiko2014551511/p/11527108.html
-  - 加锁流程
+  
+    - 原理：https://www.cnblogs.com/kiko2014551511/p/11527108.html
+- 加锁流程
+  
     - 首先判断这个key是否存在，如果存在就匹配这个value，如果存在，它就会判断这是一个重入锁，ta就执行hincrby重入次数加1，并用pexpire设置失效时间，然后返回一个空值，加锁成功。如果value不匹配，说明锁被其他线程占用，用过pttl获取key的剩余时间并返回。如果key不存在，说明这个锁没有被占用，就会执行 hset key UUID + threadId 设置键值并初始化重入次数为1，并用pexpire设置失效时间，最后返回空值
-  - 解锁流程
+- 解锁流程
     - 如果分布式锁的key存在，但是value不匹配，表示锁已经被其他线程占用，无权释放锁。那么直接返回空值
     - 如果value匹配，则就是当前线程占有分布式锁，那么将重入次数减1，重入次数减1之后如果大于0，表示分布式锁有被重入过，那么只能更新失效时间，还不能删除。重入次数减1后如果为0，这时就可以删除这个key，并发布解锁消息，返回1
     - 如果key不存在，广播锁释放消息（通知阻塞等待的线程或进程资源可用）
@@ -663,19 +652,14 @@
     - 基于RedLock思想，遍历所有的Redis客户端，然后依次加锁，最后统计成功的次数来判断是否加锁成功
 
 - 基于 zookeeper 实现分布式锁
-
+  
   - 首先一个客户端连接到这个 zk，然后它创建一个临时有序节点，判断它锁创建的节点是不是最小的，如果是最小的就获取到这个锁，然后执行自己的任务，执行完成之后这个节点自动删除，因为它是临时节点。它释放锁之后其他客户端就开始抢锁。如果不是最小的节点，那么它就获取不到这个锁，就会去watch 监听比自己小的前一个节点
-
 - 基于 redis 的分布式锁
-	
-	- 没有实现容错性和锁不能自己失效
-	- 思路：在 redis 中设置一个值表示加了锁，然后释放锁的时候就把这个key删除
-- SET anyLock unique_value NX PX 30000
-	
-	- 这里设置的超时时间是30s，假如我超过30s都还没有完成业务逻辑的情况下，key会过期，其他线程有可能会获取到锁
-	
+    - 没有实现容错性和锁不能自己失效
+    - 思路：在 redis 中设置一个值表示加了锁，然后释放锁的时候就把这个key删除
+    - SET anyLock unique_value NX PX 30000	
+    - 这里设置的超时时间是30s，假如我超过30s都还没有完成业务逻辑的情况下，key会过期，其他线程有可能会获取到锁
 - ###  redis 分布式锁和 zk 分布式锁的对比
-
   - redis 分布式锁，其实**需要自己不断去尝试获取锁**，比较消耗性能
   - zk 分布式锁，获取不到锁，注册个监听器即可，不需要不断主动尝试获取锁，性能开销较小
   - 如果是 redis 获取锁的那个客户端 出现 bug 挂了，那么只能等待超时时间之后才能释放锁；而 zk 的话，因为创建的是临时 znode，只要客户端挂了，znode 就没了，此时就自动释放锁
@@ -829,23 +813,17 @@
 - 四次挥手
 	- 任何一方都可以在数据传送结束后发出连接释放的通知，待对方确认后进入半关闭状态。当另一方也没有数据再发送的时候，则发出连接释放通知，对方确认后就完全关闭了TCP连接
 	- 举个例子：A 和 B 打电话，通话即将结束后，A 说“我没啥要说的了”，B回答“我知道了”，但是 B 可能还会有要说的话，A 不能要求 B 跟着自己的节奏结束通话，于是 B 可能又巴拉巴拉说了一通，最后 B 说“我说完了”，A 回答“知道了”，这样通话才算结束
-
-### 安恒信息
-
-- volatile 的特性
-
-  - 可见性：对一个volatile变量的读，总是能看到（任意线程）对这个volatile变量最后的写入
-  - 原子性：对任意单个volatile变量的读/写具有原子性，但类似于volatile++这种复合操作不具有原子性
-- spring 和 spring boot 的区别
-- explain 优化
-- mysql 索引结构为啥用 b+ 树
-- Spring security 的原理
-- AOP 和 IOC 的原理
-- 基于 JDK 动态代理和 CGLIB 动态代理的区别
-- spring boot 的原理
-
+### volatile 的特性
+- 可见性：对一个volatile变量的读，总是能看到（任意线程）对这个volatile变量最后的写入
+- 原子性：对任意单个volatile变量的读/写具有原子性，但类似于volatile++这种复合操作不具有原子性
+### spring 和 spring boot 的区别
+### explain 优化
+### mysql 索引结构为啥用 b+ 树
+### Spring security 的原理
+### AOP 和 IOC 的原理
+### 基于 JDK 动态代理和 CGLIB 动态代理的区别
+### spring boot 的原理
 ## 笔试题
-
 - 给定一个只包括 '('，')'，'{'，'}'，'['，']' 的字符串，判断字符串是否有效
 
   ```
