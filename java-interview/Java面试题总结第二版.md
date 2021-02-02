@@ -12,6 +12,16 @@
 
 - https://notes.daiyuhe.com/bucket-convert-to-red-black-tree-when-8-size/
 
+### redis String 和 hash的优缺点
+
+### 线程和进程的区别
+
+### 什么是死锁、怎么解决死锁
+
+### 什么是事务
+
+### springboot的好处
+
 ### 怎么获取线程的执行结果
 
 - FutureTask.get()
