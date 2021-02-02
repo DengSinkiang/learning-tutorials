@@ -1,152 +1,199 @@
-### 城市大脑
+### 如何理解 Spring 的循环依赖
 
-- 如何理解 Spring 的循环依赖
-  - 首先在 Spring Framework 整个体系当中，我们的一个Bean是由一个 BeanDefinition 来构建的，BeanDefinition 可以理解为 Spring Bean 的一个建模。然后我们要理解循环依赖的话，我们要先从 Spring Bean 的生命周期来说：一共大体的分为几步，首先我们的 Spring 容器启动扫描，把 Bean Name 变成我们 BeanDefinition，存到我们的 BeanDefinition 中，然后进行遍历，遍历完成之后，对我们的Spring这个BeanDefinition做一些基本的验证是否单例、是否抽象、是否懒加载等等之类的。验证完成之后，那么 Spring 就会去从它要开始实例化这个Bean之前，它会去我们这个容器中，我们的Spring 单例池当中获取一遍，看它存不存在就有没有被创建，如果没有被创建，再去看一下它们有没有存在我们的二级缓存中，有没有被提前暴露，如果都没有，那么我们代码会接着往下执行，创建 X 对象，创建 X 对象之后的话，会对这个 X 对象做一些初始化工作，比如哪些初始化工作：填充属性-在填充属性的过程中，它发现 X 依赖 Y，那么它就会走Y的生命周期流程，和 X 一样，首先它会去对 Y 做验证，然后判断 Y 有没有在单例池中，如果没有，再判断有没有被提前暴露，这个时候Y是没有被提前暴露的，那么Y也会接着往下执行，Y往下执行会把Y给实例化好，实例化好之后，会对Y做一些初始化工作，比如说把Y提前暴露、把Y做属性填充，那么当Y做属性填充的时候，它发现它要填充X，这个时候的话，发现X并没有被完整实例化好，所以不能填充。它要去怎么样呢，走一遍获取X或者创建X的流程，那么又会走刚刚第一次X流程，然后再走X流程过程中，它会发现我们的X已经被提前暴露，所以它可以拿到我们已经提前暴露好的ObjectFactory所产生的X对象，这样就完成了循环依赖。那么这个过程中，你会发现一个问题：Spring的循环依赖只支持单例。为什么只支持单例：因为你如果不支持单例的话，那么第一遍我们的X压根就不会走生命周期流程，因为我们的单例，在Spring容器初始化的时候，就回去走我们的Bean生命周期流程，而我们如果是原型的话，它一开始是不会走的，只有在用到的时候才会走Spring Bean的生命周期流程，所以说Spring的循环依赖是支持单例的，原型也是有办法解决的。然后XY只支持非构造方法的注入，如果说你的XY是通过一个特殊构造方法来注入的，来循环依赖，就是X依赖Y，Y依赖X都是通过X的构造方法，Y的构造方法把对应的X和Y传进去。肯定是不行的。就比如我在第一遍，我在实例化这个X时我需要Y，Y也没有，那么我去拿Y，创建Y的时候我需要X。因为它是构造方法嘛，它不能创建对象
+- 首先在 Spring Framework 整个体系当中，我们的一个Bean是由一个 BeanDefinition 来构建的，BeanDefinition 可以理解为 Spring Bean 的一个建模。然后我们要理解循环依赖的话，我们要先从 Spring Bean 的生命周期来说：一共大体的分为几步，首先我们的 Spring 容器启动扫描，把 Bean Name 变成我们 BeanDefinition，存到我们的 BeanDefinition 中，然后进行遍历，遍历完成之后，对我们的Spring这个BeanDefinition做一些基本的验证是否单例、是否抽象、是否懒加载等等之类的。验证完成之后，那么 Spring 就会去从它要开始实例化这个Bean之前，它会去我们这个容器中，我们的Spring 单例池当中获取一遍，看它存不存在就有没有被创建，如果没有被创建，再去看一下它们有没有存在我们的二级缓存中，有没有被提前暴露，如果都没有，那么我们代码会接着往下执行，创建 X 对象，创建 X 对象之后的话，会对这个 X 对象做一些初始化工作，比如哪些初始化工作：填充属性-在填充属性的过程中，它发现 X 依赖 Y，那么它就会走Y的生命周期流程，和 X 一样，首先它会去对 Y 做验证，然后判断 Y 有没有在单例池中，如果没有，再判断有没有被提前暴露，这个时候Y是没有被提前暴露的，那么Y也会接着往下执行，Y往下执行会把Y给实例化好，实例化好之后，会对Y做一些初始化工作，比如说把Y提前暴露、把Y做属性填充，那么当Y做属性填充的时候，它发现它要填充X，这个时候的话，发现X并没有被完整实例化好，所以不能填充。它要去怎么样呢，走一遍获取X或者创建X的流程，那么又会走刚刚第一次X流程，然后再走X流程过程中，它会发现我们的X已经被提前暴露，所以它可以拿到我们已经提前暴露好的ObjectFactory所产生的X对象，这样就完成了循环依赖。那么这个过程中，你会发现一个问题：Spring的循环依赖只支持单例。为什么只支持单例：因为你如果不支持单例的话，那么第一遍我们的X压根就不会走生命周期流程，因为我们的单例，在Spring容器初始化的时候，就回去走我们的Bean生命周期流程，而我们如果是原型的话，它一开始是不会走的，只有在用到的时候才会走Spring Bean的生命周期流程，所以说Spring的循环依赖是支持单例的，原型也是有办法解决的。然后XY只支持非构造方法的注入，如果说你的XY是通过一个特殊构造方法来注入的，来循环依赖，就是X依赖Y，Y依赖X都是通过X的构造方法，Y的构造方法把对应的X和Y传进去。肯定是不行的。就比如我在第一遍，我在实例化这个X时我需要Y，Y也没有，那么我去拿Y，创建Y的时候我需要X。因为它是构造方法嘛，它不能创建对象
 
-- jwt 三段含义
-	- 头信息Header：描述JWT基本信息
-	- 载荷Payload：载荷（也可以叫载体）是具体的传输内容，包括一些标准属性
-	- 签名信息Signature：对头信息和载荷进行签名，保证传输过程中信息不被篡改
-- 为什么HashMap桶长度超过8才会转换成红黑树
-	- https://notes.daiyuhe.com/bucket-convert-to-red-black-tree-when-8-size/
-- 怎么获取线程的执行结果
-	- FutureTask.get()
-- 多列索引
-- 乐观锁与悲观锁
-	- 乐观锁(Optimistic Lock), 顾名思义，就是很乐观，每次去拿数据的时候都认为别人不会修改，所以不会上锁，但是在更新的时候会判断一下在此期间别人有没有去更新这个数据，可以使用版本号等机制
-	- 悲观锁(Pessimistic Lock), 顾名思义，就是很悲观，每次去拿数据的时候都认为别人会修改，所以每次在拿数据的时候都会上锁，这样别人想拿这个数据就会block直到它拿到锁
-- Thread、Runnable、Callable区别
-	- Thread与Runnable区别
-		- 避免单继承的局限，一个类可以继承多个接口
-		- 适合于资源的共享
-	- Callable 和 Runnable 的区别
-		- Callable 使用 call（）方法， Runnable 使用 run() 方法
-		- call() 可以返回值， 而 run()方法不能返回
-		- call() 可以抛出受检查的异常，比如 ClassNotFoundException， 而 run() 不能抛出受检查的异常
-		- 执行 Callable 任务可以拿到一个 Future 对象，表示异步计算的结果。它提供了检查计算是否完成的方法，以等待计算的完成，并检索计算的结果。通过Future对象可以了解任务执行情况，可取消任务的执行，还可获取执行结果
-		- Callable 的 get 方法会阻塞主线程来等待任务完成。FutureTask 非常适合用于耗时的计算，主线程可以在完成自己的任务后，再去获取结果
-		- 加入线程池运行，Runnable 使用 ExecutorService 的 execute 方法，Callable 使用 submit 方法
-- Java Future ForkJoinTask 是什么
-- ThreadLocal是什么
-	- https://www.jianshu.com/p/fd416fac513b
-- 遍历map的方式
-	- keySet方式 keySet先获取map的key，然后根据key获取对应的value
-	- values()方式 通过values()遍历所有的value,但不能遍历key
-	- map.entrySet()方式 循环map里面的每一对键值对，然后获取key和value
-	- 使用迭代器，获取key
-- 遍历 List 的方式
-	- foreach 循环
-	- 下标递增(递减)循环
-	- 迭代器循环迭代
-- excute（）和 submit（）的区别
-	- 接收的参数不一样
-	- execute(Runnable x) 没有返回值 submit 有返回值
-	- submit 方便 Exception 处理 通过捕获 Future.get 抛出的异常
-	- JDK5 往后，任务分两类：一类是实现了 Runnable 接口的类，一类是实现了 Callable 接口的类。两者都可以被 ExecutorService 执行，它们的区别是：execute(Runnable x) 没有返回值。可以执行任务，但无法判断任务是否成功完成。——实现Runnable接口，submit(Runnable x) 返回一个future。可以用这个future来判断任务是否成功完成。——实现Callable接口
-- HashMap为啥链表长度大于8
-- mysql 主从复制原理
-	- 数据库有个bin log二进制文件，记录了所有sql语句
-	- 我们的目标就是把主数据库的bin log文件的sql语句复制过来
-	- 让其在从数据库的redo log重做日志文件中再执行一次这些sql语句即可
-- int（4）和 int（11）varchar和char区别
-	- int(M) M指示最大显示宽度 0003代表int（4）
-	- vachar存储可变长的字符串，比char更节省空间
-	- varchar需要使用1或者2个额外字节记录字符串长度
-	- char适合存储很短的字符串
-### 亲宝宝
+### jwt 三段含义
 
-- Integer 取值原因
+- 头信息Header：描述JWT基本信息
+- 载荷Payload：载荷（也可以叫载体）是具体的传输内容，包括一些标准属性
+- 签名信息Signature：对头信息和载荷进行签名，保证传输过程中信息不被篡改
 
-  - https://www.cnblogs.com/biehongli/p/12370693.html
+### 为什么HashMap桶长度超过8才会转换成红黑树
 
-- explain 字段意义
+- https://notes.daiyuhe.com/bucket-convert-to-red-black-tree-when-8-size/
 
-  - https://segmentfault.com/a/1190000008131735
+### 怎么获取线程的执行结果
 
-- char 和 vachar 的区别
+- FutureTask.get()
 
-- 布隆过滤器
+### 多列索引
 
-- redis 数据类型
+### 乐观锁与悲观锁
 
-  - string（字符串），hash（哈希），list（列表），set（集合）及zset(sorted set：有序集合)
+- 乐观锁(Optimistic Lock), 顾名思义，就是很乐观，每次去拿数据的时候都认为别人不会修改，所以不会上锁，但是在更新的时候会判断一下在此期间别人有没有去更新这个数据，可以使用版本号等机制
+- 悲观锁(Pessimistic Lock), 顾名思义，就是很悲观，每次去拿数据的时候都认为别人会修改，所以每次在拿数据的时候都会上锁，这样别人想拿这个数据就会block直到它拿到锁
 
-- 缓存击穿
+### Thread、Runnable、Callable区别
 
-- 为啥 redis 单线程模型也能效率这么高
+- Thread与Runnable区别
+	- 避免单继承的局限，一个类可以继承多个接口
+	- 适合于资源的共享
+- Callable 和 Runnable 的区别
+	- Callable 使用 call（）方法， Runnable 使用 run() 方法
+	- call() 可以返回值， 而 run()方法不能返回
+	- call() 可以抛出受检查的异常，比如 ClassNotFoundException， 而 run() 不能抛出受检查的异常
+	- 执行 Callable 任务可以拿到一个 Future 对象，表示异步计算的结果。它提供了检查计算是否完成的方法，以等待计算的完成，并检索计算的结果。通过Future对象可以了解任务执行情况，可取消任务的执行，还可获取执行结果
+	- Callable 的 get 方法会阻塞主线程来等待任务完成。FutureTask 非常适合用于耗时的计算，主线程可以在完成自己的任务后，再去获取结果
+	- 加入线程池运行，Runnable 使用 ExecutorService 的 execute 方法，Callable 使用 submit 方法
 
-  - 纯内存操作
-  - 核心是基于非阻塞的 IO 多路复用机制
-  - C 语言实现，一般来说，C 语言实现的程序“距离”操作系统更近，执行速度相对会更快
-  - 单线程反而避免了多线程的频繁上下文切换问题，预防了多线程可能产生的竞争问题
+### Java Future ForkJoinTask 是什么
 
-- mysql like 模糊
+### ThreadLocal是什么
 
-  - ```
-    '%a'     //以a结尾的数据
-    'a%'     //以a开头的数据
-    '%a%'    //含有a的数据
-    '_a_'    //三位且中间字母是a的
-    '_a'     //两位且结尾字母是a的
-    'a_'     //两位且开头字母是a的
-    ```
+- https://www.jianshu.com/p/fd416fac513b
 
-- hashmap的负载因子为什么是0.75
-  
-  - 用0.75作为加载因子，每个碰撞位置的链表长度超过８个是几乎不可能的
-- HashMap的默认长度为什么是16
-  
-  - 不浪费资源的情况下同时保证hash算法的冲突少 2的幂等保证更均匀 寻址算法进行&运算
+### 遍历map的方式
 
-### 知衣科技
+- keySet方式 keySet先获取map的key，然后根据key获取对应的value
+- values()方式 通过values()遍历所有的value,但不能遍历key
+- map.entrySet()方式 循环map里面的每一对键值对，然后获取key和value
+- 使用迭代器，获取key
 
-- ArrayList 的 contains 方法，自己实现一个 contains 方法
-- 数据库 ER 图
-- spring bean的注入过程
-- 数据库表设计
+### 遍历 List 的方式
 
-### 百世物流
+- foreach 循环
+- 下标递增(递减)循环
+- 迭代器循环迭代
 
-- rabbitmq 原理，组成
-- 基于redis怎么实现分布式锁
-- mysql隔离级别，查看隔离级别命令
-  - 1.查看当前会话隔离级别:select @@tx_isolation;
-  - 2.查看系统当前隔离级别:select @@global.tx_isolation;
-- Springboot原理，自己实现自动配置原理
+### excute（）和 submit（）的区别
 
-### 码泰科技面试题
-- LockSupport
-  - https://baijiahao.baidu.com/s?id=1666548481761194849&wfr=spider&for=pc
-- Maven 解决 jar 包冲突
-	- maven默认根据最短路径、最先声明加载 jar 包
-	- 我们可以借助 Maven Helper 插件中的 Dependency Analyzer 分析冲突的 jar 包，然后在对应标红版本的 jar 包上面点击 execlude，就可以将该 jar 包排除出去
-	- 或者手动在 pom.xml 中使用 <exclusion> 标签去排除冲突的 jar 包
-- InnoDB 索引的底层结构
-	- B+Tree: 数据存储在叶子节点，其他节点只存储索引信息
-	- B-Tree: 数据存储在各个节点上
-- hashMap 的结构图 红黑树理解
+- 接收的参数不一样
+- execute(Runnable x) 没有返回值 submit 有返回值
+- submit 方便 Exception 处理 通过捕获 Future.get 抛出的异常
+- JDK5 往后，任务分两类：一类是实现了 Runnable 接口的类，一类是实现了 Callable 接口的类。两者都可以被 ExecutorService 执行，它们的区别是：execute(Runnable x) 没有返回值。可以执行任务，但无法判断任务是否成功完成。——实现Runnable接口，submit(Runnable x) 返回一个future。可以用这个future来判断任务是否成功完成。——实现Callable接口
+
+### HashMap为啥链表长度大于8
+
+### mysql 主从复制原理
+
+- 数据库有个bin log二进制文件，记录了所有sql语句
+- 我们的目标就是把主数据库的bin log文件的sql语句复制过来
+- 让其在从数据库的redo log重做日志文件中再执行一次这些sql语句即可
+
+### int（4）和 int（11）varchar和char区别
+
+- int(M) M指示最大显示宽度 0003代表int（4）
+- vachar存储可变长的字符串，比char更节省空间
+- varchar需要使用1或者2个额外字节记录字符串长度
+- char适合存储很短的字符串
+
+### Integer 取值原因
+
+- https://www.cnblogs.com/biehongli/p/12370693.html
+
+### explain 字段意义
+
+- https://segmentfault.com/a/1190000008131735
+
+### char 和 vachar 的区别
+
+### 布隆过滤器
+
+### redis 数据类型
+
+- string（字符串），hash（哈希），list（列表），set（集合）及zset(sorted set：有序集合)
+
+### 缓存击穿
+
+### 为啥 redis 单线程模型也能效率这么高
+
+- 纯内存操作
+- 核心是基于非阻塞的 IO 多路复用机制
+- C 语言实现，一般来说，C 语言实现的程序“距离”操作系统更近，执行速度相对会更快
+- 单线程反而避免了多线程的频繁上下文切换问题，预防了多线程可能产生的竞争问题
+
+### mysql like 模糊
+
+- ```
+  '%a'     //以a结尾的数据
+  'a%'     //以a开头的数据
+  '%a%'    //含有a的数据
+  '_a_'    //三位且中间字母是a的
+  '_a'     //两位且结尾字母是a的
+  'a_'     //两位且开头字母是a的
+  ```
+
+### hashmap的负载因子为什么是0.75
+
+- 用0.75作为加载因子，每个碰撞位置的链表长度超过８个是几乎不可能的
+
+### HashMap的默认长度为什么是16
+
+- 不浪费资源的情况下同时保证hash算法的冲突少 2的幂等保证更均匀 寻址算法进行&运算
+
+### ArrayList 的 contains 方法，自己实现一个 contains 方法
+
+### 数据库 ER 图
+
+### spring bean的注入过程
+
+### 数据库表设计
+
+### rabbitmq 原理，组成
+
+### 基于redis怎么实现分布式锁
+
+### mysql隔离级别，查看隔离级别命令
+
+- 1.查看当前会话隔离级别:select @@tx_isolation;
+- 2.查看系统当前隔离级别:select @@global.tx_isolation;
+
+### Springboot原理，自己实现自动配置原理
+
+### LockSupport
+
+- https://baijiahao.baidu.com/s?id=1666548481761194849&wfr=spider&for=pc
+
+### Maven 解决 jar 包冲突
+
+- maven默认根据最短路径、最先声明加载 jar 包
+- 我们可以借助 Maven Helper 插件中的 Dependency Analyzer 分析冲突的 jar 包，然后在对应标红版本的 jar 包上面点击 execlude，就可以将该 jar 包排除出去
+- 或者手动在 pom.xml 中使用 <exclusion> 标签去排除冲突的 jar 包
+
+### InnoDB 索引的底层结构
+
+- B+Tree: 数据存储在叶子节点，其他节点只存储索引信息
+- B-Tree: 数据存储在各个节点上
+
+### hashMap 的结构图 红黑树理解
+
+### ArrayList 扩容
+
 - ArrayList 扩容 1.5 倍
+
  - 如果 ArrayList 给定了特定初始容量，则此处需要根据实际情况确定是否调用 grow 方法，即有可能不需要扩容
+
  - 当第一次调用 add 方法时，集合长度变为 10 和 addAll 内容之间的较大值
+
  - 如果没有指定初始容量，第一次调用 add 则此处一定需要调用 grow 方法
-- 什么是二进制日志 (binlog)
-	- binlog 是记录所有数据库表结构变更（例如 CREATE、ALTER TABLE…）以及表数据修改（INSERT、UPDATE、DELETE…）的二进制日志
-- hashMap 的 put() 和 putAll()
-	- 当 hashmap 中的元素个数超过数组大小 * loadFactor 时，就会进行数组扩容，loadFactor 的默认值为 0.75，也就是说，默认情况下，数组大小为 16，那么当hashmap中元素个数超过 16 * 0.75 = 12 的时候，就把数组的大小扩展为 2 * 16 = 32
-	- 比如说，我们有 1000 个元素 new HashMap(1000), 但是理论上来讲 new HashMap(1024) 更合适，但是 new HashMap(1024) 还不是更合适的，因为 0.75*1000 < 1000, 也就是说为了让 0.75 * size > 1000, 我们必须这样 new HashMap(2048) 才最合适，既考虑了 & 的问题，也避免了 resize 的问题
-	- new HashMap(3),会生成一个 4 容量的 map，5->8、10->16
-- Redis 主从加哨兵模式
-	- 主从：用于高并发必须开启 master node 的持久化(全量复制、增量复制、异步复制)
-	- 哨兵：用于高可用 选举算法：
-		- 较低的 slave_priority 按照 slave 优先级进行排序，slave priority 越低，优先级就越高
-		- 较大的 replication offset 如果 slave priority 相同，那么看 replication offset，哪个 slave 复制了越多的数据，offset 越靠后，优先级就越高
-		- 较小的 runid 如果上面两个条件都相同，那么选择一个 runid 比较小的那个 slave
-- MySQL 索引的数据结构：哈希索引、B Tree 索引
-- Mysql 存储引擎
-- 4G 的 html 文件怎么判断他的内容里都是合法的 html 标签，内存只有 2G
-- 设计模式
-	- 策略模式解决 if else
-		- https://www.iteye.com/blog/alaric-1920714
+
+ ### 什么是二进制日志 (binlog)
+
+- binlog 是记录所有数据库表结构变更（例如 CREATE、ALTER TABLE…）以及表数据修改（INSERT、UPDATE、DELETE…）的二进制日志
+
+### hashMap 的 put() 和 putAll()
+
+- 当 hashmap 中的元素个数超过数组大小 * loadFactor 时，就会进行数组扩容，loadFactor 的默认值为 0.75，也就是说，默认情况下，数组大小为 16，那么当hashmap中元素个数超过 16 * 0.75 = 12 的时候，就把数组的大小扩展为 2 * 16 = 32
+- 比如说，我们有 1000 个元素 new HashMap(1000), 但是理论上来讲 new HashMap(1024) 更合适，但是 new HashMap(1024) 还不是更合适的，因为 0.75*1000 < 1000, 也就是说为了让 0.75 * size > 1000, 我们必须这样 new HashMap(2048) 才最合适，既考虑了 & 的问题，也避免了 resize 的问题
+- new HashMap(3),会生成一个 4 容量的 map，5->8、10->16
+
+### Redis 主从加哨兵模式
+- 主从：用于高并发必须开启 master node 的持久化(全量复制、增量复制、异步复制)
+- 哨兵：用于高可用 选举算法：
+  - 较低的 slave_priority 按照 slave 优先级进行排序，slave priority 越低，优先级就越高
+  - 较大的 replication offset 如果 slave priority 相同，那么看 replication offset，哪个 slave 复制了越多的数据，offset 越靠后，优先级就越高
+  - 较小的 runid 如果上面两个条件都相同，那么选择一个 runid 比较小的那个 slave
+
+### MySQL 索引的数据结构：哈希索引、B Tree 索引
+
+### Mysql 存储引擎
+
+### 4G 的 html 文件怎么判断他的内容里都是合法的 html 标签，内存只有 2G
+
+### 设计模式
+- 策略模式解决 if else
+  - https://www.iteye.com/blog/alaric-1920714
+
 - 有一道 MySQL 的面试题，为什么MySQL的索引要使用 B+ 树而不是其它树形结构?比如B树？
   - 为什么不用 Hash 索引
     - 哈希值是无序的，不利于范围查找，不利于排序
@@ -159,19 +206,26 @@
   - 使用 B+ 树
     - 解决回旋查找的问题，范围查找效率高：**B-树只能依靠**繁琐的**中序遍历**，而**B+树只须要在链表上遍历**便可
     - 非叶子节点置只存储key，叶子节点存储key和value，value 指数据的地址
+  
 - Spring Cloud 里的 RPC 怎么实现的
+
 - Spring Bean 相互依赖问题
 	- Spring 只能解决单例模式下的 Setter 循环依赖
 	- 一个可能的解决方法就是修改源代码，将某些构造器注入改为setter注入。另一个解决方法就是完全放弃构造器注入，只使用setter注入
+	
 - Linux 基本指令
+
 - 主键索引和唯一索引的区别
 	- 主键是一种约束，唯一索引是一种索引
 	- 一张表只能有一个主键，但可以创建多个唯一索引
 	- 主键创建后一定包含一个唯一索引，唯一索引并不一定是主键
 	- 主键不能为 null，唯一索引可以为 null
 	- 主键可以做为外键，唯一索引不行
+	
 - RabbitMQ 异步 上万个消息怎么消费到自己想要的
+
 - go 的协程 
+
 - 哪些地方应用 Redis 缓存，数据缓存一致性，假如删除缓存时发现缓存已经不见了，大量请求积压到 Mysql 怎么解决
 
 ### 金锐软件面试题
@@ -617,6 +671,7 @@
 	- 没有实现容错性和锁不能自己失效
 	- 思路：在 redis 中设置一个值表示加了锁，然后释放锁的时候就把这个key删除
 - SET anyLock unique_value NX PX 30000
+	
 	- 这里设置的超时时间是30s，假如我超过30s都还没有完成业务逻辑的情况下，key会过期，其他线程有可能会获取到锁
 	
 - ###  redis 分布式锁和 zk 分布式锁的对比
