@@ -158,6 +158,8 @@
 
 ### Springboot原理，自己实现自动配置原理
 
+- Spring Boot启动的时候会通过@EnableAutoConfiguration注解找到META-INF/spring.factories配置文件中的所有自动配置类，并对其进行加载，而这些自动配置类都是以AutoConfiguration结尾来命名的，它实际上就是一个JavaConfig形式的Spring容器配置类，它能通过以Properties结尾命名的类中取得在全局配置文件中配置的属性如：server.port，而XxxxProperties类是通过@ConfigurationProperties注解与全局配置文件中对应的属性进行绑定的，再通过@EnableConfigurationProperties注解把绑定的JavaBean 注入到Spring容器当中
+
 ### LockSupport
 
 - https://baijiahao.baidu.com/s?id=1666548481761194849&wfr=spider&for=pc
@@ -842,10 +844,6 @@
   - 通过配置可以实现将业务逻辑和系统服务分离，业务逻辑只需要关心业务的处理而不去处理其他事情
 
 ### 基于 JDK 动态代理和 CGLIB 动态代理的区别
-### spring boot 的原理
-
-- Spring Boot启动的时候会通过@EnableAutoConfiguration注解找到META-INF/spring.factories配置文件中的所有自动配置类，并对其进行加载，而这些自动配置类都是以AutoConfiguration结尾来命名的，它实际上就是一个JavaConfig形式的Spring容器配置类，它能通过以Properties结尾命名的类中取得在全局配置文件中配置的属性如：server.port，而XxxxProperties类是通过@ConfigurationProperties注解与全局配置文件中对应的属性进行绑定的，再通过@EnableConfigurationProperties注解把绑定的JavaBean 注入到Spring容器当中
-
 ## 笔试题
 - 给定一个只包括 '('，')'，'{'，'}'，'['，']' 的字符串，判断字符串是否有效
 
