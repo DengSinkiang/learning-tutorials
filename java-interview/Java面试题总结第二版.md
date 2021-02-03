@@ -20,13 +20,9 @@
 
 ### 什么是事务
 
-### springboot的好处
-
 ### 怎么获取线程的执行结果
 
 - FutureTask.get()
-
-### 多列索引
 
 ### 乐观锁与悲观锁
 
@@ -208,44 +204,38 @@
 ### 4G 的 html 文件怎么判断他的内容里都是合法的 html 标签，内存只有 2G
 
 ### 设计模式
-- 策略模式解决 if else
-  - https://www.iteye.com/blog/alaric-1920714
-
-- 有一道 MySQL 的面试题，为什么MySQL的索引要使用 B+ 树而不是其它树形结构?比如B树？
-  - 为什么不用 Hash 索引
-    - 哈希值是无序的，不利于范围查找，不利于排序
-  - 为啥不用平衡二叉树
-    - 随着树的高度的增加，查找速度越来越慢
-    - 回旋查找很慢，比如查找大于5的数非常多，回旋查找效率就很低
-  - 为啥不用 B 树
-    - 解决平衡二叉树的树的高度问题，树越矮，查找效率越高
-    - 还是存在回旋查找的问题
-  - 使用 B+ 树
-    - 解决回旋查找的问题，范围查找效率高：**B-树只能依靠**繁琐的**中序遍历**，而**B+树只须要在链表上遍历**便可
-    - 非叶子节点置只存储key，叶子节点存储key和value，value 指数据的地址
-    - B+Tree: 数据存储在叶子节点，其他节点只存储索引信息----InnoDB
-    - B-Tree: 数据存储在各个节点上----InnoDB
+### 策略模式解决 if else
+- https://www.iteye.com/blog/alaric-1920714
+### 有一道 MySQL 的面试题，为什么MySQL的索引要使用 B+ 树而不是其它树形结构?比如B树？
+- 为什么不用 Hash 索引
+  - 哈希值是无序的，不利于范围查找，不利于排序
+- 为啥不用平衡二叉树
+  - 随着树的高度的增加，查找速度越来越慢
+  - 回旋查找很慢，比如查找大于5的数非常多，回旋查找效率就很低
+- 为啥不用 B 树
+  - 解决平衡二叉树的树的高度问题，树越矮，查找效率越高
+  - 还是存在回旋查找的问题
+- 使用 B+ 树
+  - 解决回旋查找的问题，范围查找效率高：**B-树只能依靠**繁琐的**中序遍历**，而**B+树只须要在链表上遍历**便可
+  - 非叶子节点置只存储key，叶子节点存储key和value，value 指数据的地址
+  - B+Tree: 数据存储在叶子节点，其他节点只存储索引信息----InnoDB
+  - B-Tree: 数据存储在各个节点上----InnoDB
   
-- Spring Cloud 里的 RPC 怎么实现的
+### Spring Cloud 里的 RPC 怎么实现的
 
-- Spring Bean 相互依赖问题
-	- Spring 只能解决单例模式下的 Setter 循环依赖
-	- 一个可能的解决方法就是修改源代码，将某些构造器注入改为setter注入。另一个解决方法就是完全放弃构造器注入，只使用setter注入
-	
-- Linux 基本指令
-
-- 主键索引和唯一索引的区别
-	- 主键是一种约束，唯一索引是一种索引
-	- 一张表只能有一个主键，但可以创建多个唯一索引
-	- 主键创建后一定包含一个唯一索引，唯一索引并不一定是主键
-	- 主键不能为 null，唯一索引可以为 null
-	- 主键可以做为外键，唯一索引不行
-	
-- RabbitMQ 异步 上万个消息怎么消费到自己想要的
-
-- go 的协程 
-
-- 哪些地方应用 Redis 缓存，数据缓存一致性，假如删除缓存时发现缓存已经不见了，大量请求积压到 Mysql 怎么解决
+### Spring Bean 相互依赖问题
+- Spring 只能解决单例模式下的 Setter 循环依赖
+- 一个可能的解决方法就是修改源代码，将某些构造器注入改为setter注入。另一个解决方法就是完全放弃构造器注入，只使用setter注入
+### Linux 基本指令
+### 主键索引和唯一索引的区别
+- 主键是一种约束，唯一索引是一种索引
+- 一张表只能有一个主键，但可以创建多个唯一索引
+- 主键创建后一定包含一个唯一索引，唯一索引并不一定是主键
+- 主键不能为 null，唯一索引可以为 null
+- 主键可以做为外键，唯一索引不行
+### RabbitMQ 异步 上万个消息怎么消费到自己想要的
+### go 的协程 
+### 哪些地方应用 Redis 缓存，数据缓存一致性，假如删除缓存时发现缓存已经不见了，大量请求积压到 Mysql 怎么解决
 
 ### controller 和 service 和 dao 层是单例的吗？
 - 是的 可以通过在配置文件的 bean 中添加 scope="prototype" 变成多例
@@ -518,8 +508,6 @@
 - Spring 中的bean是线程安全的吗
   - https://www.cnblogs.com/myseries/p/11729800.html
 
-- Springboot的自动配置原理
-      - Spring Boot启动的时候会通过@EnableAutoConfiguration注解找到META-INF/spring.factories配置文件中的所有自动配置类，并对其进行加载，而这些自动配置类都是以AutoConfiguration结尾来命名的，它实际上就是一个JavaConfig形式的Spring容器配置类，它能通过以Properties结尾命名的类中取得在全局配置文件中配置的属性如：server.port，而XxxxProperties类是通过@ConfigurationProperties注解与全局配置文件中对应的属性进行绑定的，再通过@EnableConfigurationProperties注解把绑定的JavaBean 注入到Spring容器当中
 - Spring Bean 的作用域
 	- singleton、prototype、request、session、global-session
 - Spring Bean 的生命周期
@@ -571,11 +559,6 @@
 		- 优点：应用启动时占用资源很少，对资源要求较高的应用，比较有优势
 		- 缺点：速度会相对来说慢一些。而且有可能会出现空指针异常的错误，而且通过 Bean 工厂创建的 Bean 生命周期会简单一些。 所有的 Bean 在启动的时候都加载，系统运行的速度快，而且可以尽早的发现系统中的配置问题
 		- 建议 Web 应用，在启动的时候就把所有的 Bean 都加载了
-- Spring IOC 实现原理
-	- 控制反转也叫依赖注入。利用 java 反射机制，将对象交给容器处理，你只需要在 Spring 配置文件中配置对应的 Bean 以及设置相关的属性，让 Spring 容器来生成类的实例对象以及管理对象
-- Spring AOP 实现原理
-	- 利用代理模式。一种是基于 JDK 的动态代理，一种是基于 CGLIB 的动态代理
-	- 通过配置可以实现将业务逻辑和系统服务分离，业务逻辑只需要关心业务的处理而不去处理其他事情
 - Spring中配置的 Bean 是在什么时候实例化的
 	- 默认容器在加载的时候初始化 Bean，但是也可以通过设置lazy-init 属性来延迟加载
 - 谈谈 IOC、AOP 和 DI 在项目开发中的应用场景
@@ -839,12 +822,30 @@
 - 可见性：对一个volatile变量的读，总是能看到（任意线程）对这个volatile变量最后的写入
 - 原子性：对任意单个volatile变量的读/写具有原子性，但类似于volatile++这种复合操作不具有原子性
 ### spring 和 spring boot 的区别
-### explain 优化
+
+- Spring框架是一个平台，为Java应用的开发提供综合性的基础支撑，因此你可以聚焦业务开发，而不用关心基础开发
+- 首先，最重要的一点，Spring Boot是Spring的扩展，使用“约定优于配置”的理念开发，所以使用Spring Boot开发同样的功能，往往不需要像Spring那样手动配置。Spring Boot的自动装配，使各个功能模块的引入和配置变得非常简单，几乎可以做到0配置
+- 其次，如果展开去说，Spring Boot在应用容器配置、数据库配置、安全配置、测试和部署方便都与Spring有不同，但基本上都更加简单，受益于自动装配
+- 综上所述，最大的区别就是Spring更多的需要人工配置，Spring Boot实现了自动装配
+
 ### mysql 索引结构为啥用 b+ 树
 ### Spring security 的原理
+
+- 认证和授权
+
 ### AOP 和 IOC 的原理
+
+- Spring IOC 实现原理
+  - 控制反转也叫依赖注入。利用 java 反射机制，将对象交给容器处理，你只需要在 Spring 配置文件中配置对应的 Bean 以及设置相关的属性，让 Spring 容器来生成类的实例对象以及管理对象
+- Spring AOP 实现原理
+  - 利用代理模式。一种是基于 JDK 的动态代理，一种是基于 CGLIB 的动态代理
+  - 通过配置可以实现将业务逻辑和系统服务分离，业务逻辑只需要关心业务的处理而不去处理其他事情
+
 ### 基于 JDK 动态代理和 CGLIB 动态代理的区别
 ### spring boot 的原理
+
+- Spring Boot启动的时候会通过@EnableAutoConfiguration注解找到META-INF/spring.factories配置文件中的所有自动配置类，并对其进行加载，而这些自动配置类都是以AutoConfiguration结尾来命名的，它实际上就是一个JavaConfig形式的Spring容器配置类，它能通过以Properties结尾命名的类中取得在全局配置文件中配置的属性如：server.port，而XxxxProperties类是通过@ConfigurationProperties注解与全局配置文件中对应的属性进行绑定的，再通过@EnableConfigurationProperties注解把绑定的JavaBean 注入到Spring容器当中
+
 ## 笔试题
 - 给定一个只包括 '('，')'，'{'，'}'，'['，']' 的字符串，判断字符串是否有效
 
