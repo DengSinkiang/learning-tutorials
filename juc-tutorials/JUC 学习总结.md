@@ -991,7 +991,7 @@
 - AQS 内部原理
   - state
     - 这里 state 具体含义，会根据具体实现类的不同而不同，比如在 Semaphore 里，它表示 "剩余的许可证的数量"，而在 CountDownLatch 里，它表示 "还需要倒数的数量"
-    - state 是 volatile 修饰的，会被并发修改，所以所有修改 state 的方法都需要保证线程安全，比如 getState、setState 以及 compareAndSetState 操作来读取和更新这个状态。这些方法都依赖于      j.u.c.atomic 包的支持
+    - state 是 volatile 修饰的，会被并发修改，所以所有修改 state 的方法都需要保证线程安全，比如 getState、setState 以及 compareAndSetState 操作来读取和更新这个状态。这些方法都依赖于 j.u.c.atomic 包的支持
     - 在 ReentrantLock 中，state 表示锁的占有情况，包括可重入计数，当 state 的值为 0 的时候，标识该 Lock 不被任何线程所占有
   - 控制线程抢锁和配合的 FIFO 队列
     - 这个队列用来存放 "等待的线程"，AQS 就是 "排队管理器"，当多个线程争用同一把锁时，必须有排队机制将那些没能拿到锁的线程串在一起。当锁释放时，锁管理器就会挑选一个合适的线程来占有这个刚刚释放的锁
